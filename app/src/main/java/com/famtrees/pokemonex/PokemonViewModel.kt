@@ -21,24 +21,41 @@ class PokemonViewModel @ViewModelInject constructor(
 
     private val pokeList: MutableLiveData<List<NameLink>> by lazy {
         MutableLiveData<List<NameLink>>().also {
-            loadPokeAPI()
+            loadPokeAPI(null)
         }
     }
 
     private val pokemonList: MutableMap<Int, Pokemon> = mutableMapOf()
 
-    private fun loadPokeAPI(){
+    private fun loadPokeAPI(cb: (()->Unit)?){
         webService.fetchPokemonList(limit, offset).enqueue(
             object : Callback<PokeRes> {
                 override fun onResponse(call: Call<PokeRes>, response: Response<PokeRes>){
                     val body = response.body()
-                    pokeList.postValue(body?.getNameLinks())
+                    if(body != null){
+                        val names = pokeList.value?.toMutableList()
+                        val next = body.getNameLinks()
+                        if(names != null ){
+                            names += next
+                            pokeList.postValue(names.toList())
+                        } else {
+                            pokeList.postValue(next.toList())
+                        }
+                    }
                     offset += limit
+                    if (cb != null)
+                        cb()
                 }
 
                 override fun onFailure(call: Call<PokeRes>, t: Throwable) {}
             }
         )
+    }
+
+    fun loadMorePokemon(cb: (Int) -> Unit){
+        loadPokeAPI{
+            pokeList.value?.size?.let { cb(it) }
+        }
     }
 
     fun getPokemon(): LiveData<List<NameLink>> {

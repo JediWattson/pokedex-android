@@ -5,10 +5,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
-import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.RecyclerView
-import com.android.volley.Request
-import com.android.volley.toolbox.JsonObjectRequest
 import com.bumptech.glide.Glide
 import kotlinx.android.synthetic.main.pokemon.view.*
 
@@ -22,12 +19,7 @@ class PokemonAdapter(
             notifyDataSetChanged()
         }
 
-    class ViewHolder(var pokemon: View) : RecyclerView.ViewHolder(pokemon) {
-        init {
-            val pokemonName = pokemon.findViewById<TextView>(R.id.pokemonName)
-            val pokemonImg = pokemon.findViewById<ImageView>(R.id.pokemonImg)
-        }
-    }
+    class ViewHolder(var pokemon: View) : RecyclerView.ViewHolder(pokemon) {}
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val pokemon = LayoutInflater
@@ -37,10 +29,18 @@ class PokemonAdapter(
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        holder.pokemon.poke_index.text = (position + 1).toString()
+
+        if(position == pokemonListSize - 1){
+            model.loadMorePokemon{
+                pokemonListSize = it
+                notifyDataSetChanged()
+            }
+        }
 
         model.loadPokemon(position){pokemon ->
-            holder.pokemon.pokemonName.setText(pokemon.name)
-            val imgView = holder.pokemon.pokemonImg
+            holder.pokemon.poke_name.text = pokemon.name
+            val imgView = holder.pokemon.poke_img
             Glide.with(imgView.context)
                 .load(pokemon.sprites.front_default)
                 .into(imgView)
