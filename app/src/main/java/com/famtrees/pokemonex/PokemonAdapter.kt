@@ -13,7 +13,7 @@ class PokemonAdapter(
     private val model: PokemonViewModel
 ): RecyclerView.Adapter<PokemonAdapter.ViewHolder>(){
 
-    var pokemonListSize: Int = 0
+    var pokemonDetails: MutableMap<Int, Pokemon> = mutableMapOf()
         set(value) {
             field = value
             notifyDataSetChanged()
@@ -31,24 +31,23 @@ class PokemonAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         holder.pokemon.poke_index.text = (position + 1).toString()
 
-        if(position == pokemonListSize - 1){
-            model.loadMorePokemon{
-                pokemonListSize = it
-                notifyDataSetChanged()
-            }
+        if(position == pokemonDetails.size - 1){
+            model.loadPokeAPI()
         }
 
-        model.loadPokemon(position){pokemon ->
-            holder.pokemon.poke_name.text = pokemon.name
+        val pokemon = pokemonDetails[position]
+        if(pokemon?.details != null){
+            holder.pokemon.poke_name.text = pokemon.nameLink.name
             val imgView = holder.pokemon.poke_img
             Glide.with(imgView.context)
-                .load(pokemon.sprites.front_default)
+                .load(pokemon.details?.sprites?.front_default)
                 .into(imgView)
-
+        } else {
+            model.loadPokemon(position)
         }
 
     }
 
-    override fun getItemCount() = pokemonListSize
+    override fun getItemCount() = pokemonDetails.size
 
 }

@@ -4,83 +4,66 @@ import androidx.hilt.lifecycle.ViewModelInject
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.android.volley.toolbox.Volley
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import java.lang.Exception
 import javax.inject.Singleton
 
 class PokemonViewModel @ViewModelInject constructor(
-    private val webService: WebService
+    private val pokemonRepo: PokemonRepo
 ): ViewModel() {
 
+    private var limit = 25
     private var offset = 0
-    private val limit = 25
 
-    private val pokeList: MutableLiveData<List<NameLink>> by lazy {
-        MutableLiveData<List<NameLink>>().also {
-            loadPokeAPI(null)
+    private val pokemonDetails: MutableLiveData<MutableMap<Int, Pokemon>> by lazy {
+        MutableLiveData<MutableMap<Int, Pokemon>>().also {
+            loadPokeAPI()
         }
     }
 
-    private val pokemonList: MutableMap<Int, Pokemon> = mutableMapOf()
+    fun loadPokeAPI(){
+        viewModelScope.launch {
+            val result = try {
+                pokemonRepo.fetchPokemonList(limit, offset)
+            } catch (e: Exception){
+                throw Error(e)
+            }
 
-    private fun loadPokeAPI(cb: (()->Unit)?){
-        webService.fetchPokemonList(limit, offset).enqueue(
-            object : Callback<PokeRes> {
-                override fun onResponse(call: Call<PokeRes>, response: Response<PokeRes>){
-                    val body = response.body()
-                    if(body != null){
-                        val names = pokeList.value?.toMutableList()
-                        val next = body.getNameLinks()
-                        if(names != null ){
-                            names += next
-                            pokeList.postValue(names.toList())
-                        } else {
-                            pokeList.postValue(next.toList())
-                        }
-                    }
-                    offset += limit
-                    if (cb != null)
-                        cb()
+            val names = pokemonDetails.value ?: mutableMapOf()
+            val namesLinks = result.results
+            for (index in offset until (offset + limit)){
+                val pokemon = Pokemon(index, namesLinks[index - offset], null)
+                names.put(index, pokemon)
+            }
+            pokemonDetails.postValue(names)
+        }
+    }
+
+    fun getPokemon(): LiveData<MutableMap<Int, Pokemon>> {
+        return pokemonDetails
+    }
+
+    fun loadPokemon(position: Int){
+        val pokemon = pokemonDetails.value?.get(position)
+        if(pokemon != null){
+            viewModelScope.launch {
+                val result = try {
+                    pokemonRepo.fetchPokemonDetail(pokemon.nameLink.name)
+                } catch (e: Exception) {
+                    throw Error(e)
                 }
-
-                override fun onFailure(call: Call<PokeRes>, t: Throwable) {}
+                pokemon.details = result
+                pokemonDetails.value?.put(position, pokemon)
             }
-        )
-    }
-
-    fun loadMorePokemon(cb: (Int) -> Unit){
-        loadPokeAPI{
-            pokeList.value?.size?.let { cb(it) }
         }
     }
 
-    fun getPokemon(): LiveData<List<NameLink>> {
-        return pokeList
-    }
-
-    fun loadPokemon(position: Int, cb: (Pokemon)-> Unit){
-        val pokemon = pokemonList.get(position)
-        if(pokemon == null){
-            val pokeNmae = pokeList.value?.get(position)?.name
-            if (pokeNmae != null) {
-                webService.fetchPokemon(pokeNmae).enqueue(object: Callback<Pokemon> {
-                    override fun onResponse(call: Call<Pokemon>, response: Response<Pokemon>) {
-                        val body = response.body()
-                        if (body != null) {
-                            pokemonList.put(position, body)
-                            cb(body)
-                        }
-                    }
-                    override fun onFailure(call: Call<Pokemon>, t: Throwable) {}
-
-                })
-            }
-        } else {
-            cb(pokemon)
-        }
-    }
 }

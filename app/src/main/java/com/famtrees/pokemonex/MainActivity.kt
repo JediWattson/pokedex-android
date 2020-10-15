@@ -29,8 +29,8 @@ class MainActivity : AppCompatActivity() {
             adapter = viewAdapter
         }
 
-        model.getPokemon().observe(this, Observer<List<NameLink>>{ pokemonList ->
-            viewAdapter.pokemonListSize = pokemonList.size
+        model.getPokemon().observe(this, Observer<MutableMap<Int, Pokemon>>{ pokemonList ->
+            viewAdapter.pokemonDetails = pokemonList
         })
 
     }

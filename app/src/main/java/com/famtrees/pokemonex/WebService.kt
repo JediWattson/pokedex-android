@@ -10,12 +10,12 @@ import retrofit2.http.Query
 
 interface WebService {
     @GET("api/v2/pokemon")
-    fun fetchPokemonList(
+    suspend fun fetchPokemonList(
         @Query("limit") limit: Int,
         @Query("offset") offset: Int
-    ): Call<PokeRes>
+    ): PokeRes
 
     @GET("api/v2/pokemon/{name}")
-    fun fetchPokemon(@Path("name") name: String): Call<Pokemon>
+    suspend fun fetchPokemon(@Path("name") name: String): Details
 
 }
