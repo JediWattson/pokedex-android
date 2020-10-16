@@ -25,23 +25,25 @@ class PokemonAdapter(
         return ViewHolder(pokemon)
     }
 
-    private fun shouldBind(holder: ViewHolder, pokemon: Pokemon) =
-        pokemon.details != null && holder.pokemon.poke_name.text == pokemon.nameLink.name
+    private fun isSame(holder: ViewHolder, pokemon: Pokemon?) = holder.pokemon.poke_name.text == pokemon?.nameLink?.name
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         holder.pokemon.poke_index.text = (position + 1).toString()
 
         val pokemon = getPokemon(position)
-        if(pokemon == null || shouldBind(holder, pokemon)){
-
-        } else {
+        if(pokemon?.details == null){
+            holder.pokemon.poke_name.text = "Capturing Pokemon!"
+            val imgView = holder.pokemon.poke_img
+            Glide.with(imgView.context)
+                .load("https://wiki.p-insurgence.com/images/0/09/722.png")
+                .into(imgView)
+        } else if(!isSame(holder, pokemon)){
             holder.pokemon.poke_name.text = pokemon.nameLink.name
             val imgView = holder.pokemon.poke_img
             Glide.with(imgView.context)
                 .load(pokemon.details?.sprites?.front_default)
                 .into(imgView)
         }
-
     }
 
     var size: Int = 0

@@ -1,5 +1,7 @@
 package com.famtrees.pokemonex
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.hilt.lifecycle.ViewModelInject
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -14,6 +16,7 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import java.lang.Exception
+import java.util.concurrent.ForkJoinPool
 import javax.inject.Singleton
 
 class PokemonViewModel @ViewModelInject constructor(
@@ -32,7 +35,7 @@ class PokemonViewModel @ViewModelInject constructor(
     private var isLoading = false
     private fun loadPokeAPI(){
         isLoading = true
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             val result = try {
                 pokemonRepo.fetchPokemonList(limit, offset)
             } catch (e: Exception){
