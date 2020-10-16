@@ -21,7 +21,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         viewManager = LinearLayoutManager(this)
-        viewAdapter = PokemonAdapter(model)
+        viewAdapter = PokemonAdapter(model::getPokemonDetail)
 
         pokemon_list.apply {
             setHasFixedSize(true)
@@ -29,8 +29,9 @@ class MainActivity : AppCompatActivity() {
             adapter = viewAdapter
         }
 
-        model.getPokemon().observe(this, Observer<MutableMap<Int, Pokemon>>{ pokemonList ->
-            viewAdapter.pokemonDetails = pokemonList
+        model.getPokemon().observe(this, Observer< MutableMap<Int, Pokemon>>{ value ->
+            viewAdapter.size = value.size
+            viewAdapter.notifyDataSetChanged()
         })
 
     }

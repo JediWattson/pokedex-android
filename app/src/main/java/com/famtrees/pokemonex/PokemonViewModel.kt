@@ -23,13 +23,15 @@ class PokemonViewModel @ViewModelInject constructor(
     private var limit = 25
     private var offset = 0
 
-    private val pokemonDetails: MutableLiveData<MutableMap<Int, Pokemon>> by lazy {
-        MutableLiveData<MutableMap<Int, Pokemon>>().also {
+    private val pokemonDetails: MutableLiveData< MutableMap<Int, Pokemon>> by lazy {
+        MutableLiveData< MutableMap<Int, Pokemon>>().also {
             loadPokeAPI()
         }
     }
 
-    fun loadPokeAPI(){
+    private var isLoading = false
+    private fun loadPokeAPI(){
+        isLoading = true
         viewModelScope.launch {
             val result = try {
                 pokemonRepo.fetchPokemonList(limit, offset)
@@ -46,14 +48,11 @@ class PokemonViewModel @ViewModelInject constructor(
 
             pokemonDetails.postValue(names)
             offset += limit
+            isLoading = false
         }
     }
 
-    fun getPokemon(): LiveData<MutableMap<Int, Pokemon>> {
-        return pokemonDetails
-    }
-
-    fun loadPokemon(position: Int){
+    private fun loadPokemon(position: Int){
         val pokemon = pokemonDetails.value?.get(position)
         if(pokemon != null){
             viewModelScope.launch {
@@ -69,5 +68,24 @@ class PokemonViewModel @ViewModelInject constructor(
             }
         }
     }
+
+    fun getPokemon(): LiveData<MutableMap<Int, Pokemon>> {
+        return pokemonDetails
+    }
+
+    fun getPokemonDetail(position: Int): Pokemon?{
+        if(!isLoading && position == offset - 1)
+            loadPokeAPI()
+
+        val pokemon = pokemonDetails.value?.get(position)
+        if(pokemon?.details != null){
+            return pokemon
+        } else {
+            loadPokemon(position)
+        }
+
+        return null
+    }
+
 
 }
