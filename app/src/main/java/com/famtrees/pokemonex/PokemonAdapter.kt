@@ -35,7 +35,7 @@ class PokemonAdapter(
             model.loadPokeAPI()
         }
 
-        val pokemon = pokemonDetails[position]
+        val pokemon = pokemonDetails.get(position)
         if(pokemon?.details != null){
             holder.pokemon.poke_name.text = pokemon.nameLink.name
             val imgView = holder.pokemon.poke_img
@@ -44,6 +44,7 @@ class PokemonAdapter(
                 .into(imgView)
         } else {
             model.loadPokemon(position)
+            holder.pokemon.poke_name.text = "Loading Pokemon..."
         }
 
     }

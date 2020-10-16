@@ -39,11 +39,13 @@ class PokemonViewModel @ViewModelInject constructor(
 
             val names = pokemonDetails.value ?: mutableMapOf()
             val namesLinks = result.results
-            for (index in offset until (offset + limit)){
-                val pokemon = Pokemon(index, namesLinks[index - offset], null)
-                names.put(index, pokemon)
+            for (index in 0 until limit){
+                val pokemon = Pokemon(index, namesLinks[index], null)
+                names.set(index + offset, pokemon)
             }
+
             pokemonDetails.postValue(names)
+            offset += limit
         }
     }
 
@@ -61,7 +63,9 @@ class PokemonViewModel @ViewModelInject constructor(
                     throw Error(e)
                 }
                 pokemon.details = result
-                pokemonDetails.value?.put(position, pokemon)
+                val liveList = pokemonDetails.value
+                liveList?.set(position, pokemon)
+                pokemonDetails.postValue(liveList)
             }
         }
     }
